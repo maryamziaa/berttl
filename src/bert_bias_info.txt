@@ -1,0 +1,5 @@
+{
+    "memory_cost": 235.62164,
+    "param_size": 109.79252,
+    "act_size": 15.72864
+}
