@@ -95,20 +95,6 @@ def count_activation_size(net, args, input_size=(8, 128), require_backward=True,
 		# temporary memory footprint required by inference
 		m.tmp_activations = torch.Tensor([x[0].numel() * act_byte])  # bytes
 
-	# noinspection PyArgumentList
-	def count_mobilepooler(m, x, _):
-		# count activation size required by backward
-		if m.dense:
-			print('dense')
-		if m.tanh:
-			print('tanh')
-		if m.weight is not None and m.weight.requires_grad:
-			m.grad_activations = torch.Tensor([x[0].numel() * act_byte])  # bytes
-		else:
-			m.grad_activations = torch.Tensor([0])
-		# temporary memory footprint required by inference
-		m.tmp_activations = torch.Tensor([x[0].numel() * act_byte])  # bytes
-
 	def add_hooks(m_):
 		if len(list(m_.children())) > 0:
 			return

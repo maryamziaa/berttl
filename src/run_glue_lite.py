@@ -24,6 +24,9 @@ import os
 import random
 import json
 
+from utils.memory_cost_profiler import *
+from utils.modules import LiteResidualModule
+
 import numpy as np
 import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
@@ -37,15 +40,7 @@ except:
 
 from tqdm import tqdm, trange
 
-from transformers import (WEIGHTS_NAME, BertConfig,
-                                  BertForSequenceClassification, BertTokenizer,
-                                  RobertaConfig,
-                                  RobertaForSequenceClassification,
-                                  RobertaTokenizer,
-                                  XLMConfig, XLMForSequenceClassification,
-                                  XLMTokenizer, XLNetConfig,
-                                  XLNetForSequenceClassification,
-                                  XLNetTokenizer,
+from transformers import (WEIGHTS_NAME, 
                                   DistilBertConfig,
                                   DistilBertForSequenceClassification,
                                   DistilBertTokenizer,
@@ -62,10 +57,6 @@ logger = logging.getLogger(__name__)
 
 
 MODEL_CLASSES = {
-    'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
-    'xlnet': (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
-    'xlm': (XLMConfig, XLMForSequenceClassification, XLMTokenizer),
-    'roberta': (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
     'distilbert': (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
     'mobilebert': (MobileBertConfig,  MobileBertForSequenceClassification, MobileBertTokenizer)
 }
@@ -250,7 +241,7 @@ def evaluate(args, model, tokenizer, prefix=""):
                           'attention_mask': batch[1],
                           'labels':         batch[3]}
                 if args.model_type != 'distilbert':
-                    inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
+                    inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet', 'mobilebert'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
                 outputs = model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
 
@@ -303,16 +294,8 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             # HACK(label indices are swapped in RoBERTa pretrained model)
             label_list[1], label_list[2] = label_list[2], label_list[1] 
         examples = processor.get_dev_examples(args.data_dir) if evaluate else processor.get_train_examples(args.data_dir)
-
-        if args.model_type=='mobilebert':
-                    features = convert_examples_to_features(examples,
-                                                tokenizer,
-                                                label_list=label_list,
-                                                max_length=args.max_seq_length,
-                                                output_mode=output_mode
-                    ) 
-        else:
-            features = convert_examples_to_features(examples,
+        
+        features = convert_examples_to_features(examples,
                                                 tokenizer,
                                                 label_list=label_list,
                                                 max_length=args.max_seq_length,
@@ -482,26 +465,38 @@ def main():
                                         config=config,
                                         cache_dir=args.cache_dir if args.cache_dir else None)
 
+    #print(model)
+    #for m in model.modules():
+            #print ('@@@@@,m@@@@@@@@@',m)
 
-        
-    #update only biases in ffn layers
     for n, p in model.named_parameters():
-         if 'ffn' in n and 'weight' in n:
-             p.requires_grad = False
+        print ('@@@@@,m@@@@@@@@@',n)
 
     invalid_call()
-    '''
-    net = 	model.copy()
+      
+    #update only biases in ffn layers
+    for n, p in model.named_parameters():
+        if 'ffn' in n and 'weight' in n:
+                p.requires_grad = False 
+
+    
+    
     args.lite_residual_downsample = 2
     args.lite_residual_expand = 1
     args.lite_residual_ks = 5
     args.lite_residual_groups = 2
-    #LiteResidualModule.insert_lite_residual(
-			net, args.lite_residual_downsample, 'bilinear', args.lite_residual_expand, args.lite_residual_ks,
+    #LiteResidualModule should be added only to ffn
+    LiteResidualModule.insert_lite_residual(
+			model, args.lite_residual_downsample, 'bilinear', args.lite_residual_expand, args.lite_residual_ks,
             'relu', args.lite_residual_groups,
 		)
-    if args.enable_lite_residual:
-		for m in net.modules():
+
+    
+    for m in model.modules():
+            print ('@@@@@,m@@@@@@@@@',m)
+    
+    invalid_call() 
+    '''
 			if isinstance(m, LiteResidualModule):
 				set_module_grad_status(m.lite_residual, True)
 				if args.enable_bias_update or args.enable_bn_update:
@@ -606,5 +601,3 @@ if __name__ == "__main__":
 
 
 
-#python run_glue.py --data_dir=../data/glue_data/CoLA --model_type=mobilebert --model_name_or_path=google/mobilebert-uncased --task_name=cola --output_dir=output_mobilebert --do_train --do_lower_case
-#python run_glue.py --data_dir=../data/glue_data/CoLA --model_type=distilbert --model_name_or_path=../model/distilbert-base-uncased --task_name=cola --output_dir=../output_mobilebert --do_train 
