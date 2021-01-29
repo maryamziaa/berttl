@@ -496,8 +496,6 @@ def main():
             fout.write(json.dumps(net_info, indent=4) + '\n')
     #@@@@@@@@@@@@@@@@@@@@@@@@
 
-    invalid_call()
-
 
     # Training
     if args.do_train:
