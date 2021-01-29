@@ -114,9 +114,6 @@ model = model_class.from_pretrained(args.model_name_or_path,
 # for it:
 #
 
-#model = models.resnet18()
-#inputs = torch.randn(5, 3, 224, 224) #resnet input
-
 inputs = {'input_ids':      torch.randint(0, 2843, (1,128)).long(),
             'attention_mask': torch.randint(0, 2, (1,128)).long(),
             'labels':         torch.randint(0, 1, (1,)).long()}
