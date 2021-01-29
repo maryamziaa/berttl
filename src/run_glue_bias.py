@@ -468,9 +468,8 @@ def main():
         
     #update only biases in ffn layers
     for n, p in model.named_parameters():
-         if all(x in n for x in ['ffn', 'ffn']):
-             p.requires_grad = False
-    
+        if all(x in n for x in ['ffn', 'weight']):
+            p.requires_grad = False
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
@@ -496,6 +495,8 @@ def main():
         with open('%s_bias_info.txt'% args.model_type, 'a') as fout:
             fout.write(json.dumps(net_info, indent=4) + '\n')
     #@@@@@@@@@@@@@@@@@@@@@@@@
+
+    invalid_call()
 
 
     # Training

@@ -476,8 +476,8 @@ def main():
       
     #update only biases in ffn layers
     for n, p in model.named_parameters():
-        if 'ffn' in n and 'weight' in n:
-                p.requires_grad = False 
+        if all(x in n for x in ['ffn', 'weight']):
+            p.requires_grad = False
 
     
     
