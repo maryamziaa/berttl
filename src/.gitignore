@@ -1,0 +1,29 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+*.pyo
+*.pyc
+*~
+*.local
+
+# profile generated files #
+######################
+distilbert_bias_info.txt
+mobilebert_bias_info.txt
+mobilebert_net_info.txt
+
+# checkpoints files #
+######################
+*.pt
+*.bin
+../output_bert/
+../output_distilbert/
+../output_distilbert_bias/
+../output_mobilebert/
+../output_mobilebert_bias/
+
+# data files #
+######################
+../data/
+../model/
