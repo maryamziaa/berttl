@@ -26,4 +26,4 @@ mobilebert_net_info.txt
 # data files #
 ######################
 ../data/
-../model/
+../model/.DS_Store
