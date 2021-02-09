@@ -2,6 +2,9 @@
 
 How to run the code:
 
+## Requirements
+pip install transformers==3.2.0
+
 ## Download GLUE data
 
 Go to the data directory by ```cd data```
