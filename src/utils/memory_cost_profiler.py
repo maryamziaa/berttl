@@ -108,9 +108,9 @@ def count_activation_size(net, args, input_size=(8, 128), require_backward=True,
 			fn = count_linear
 		elif type(m_) in [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.GroupNorm]:
 			fn = count_bn
-		elif type(m_) in [nn.ReLU, nn.ReLU6, nn.LeakyReLU]:
+		elif type(m_) in [nn.ReLU, nn.ReLU6, nn.LeakyReLU, nn.GELU]:
 			fn = count_relu
-		elif type(m_) in [nn.Sigmoid, nn.Tanh, Hswish, Hsigmoid, nn.GELU]:
+		elif type(m_) in [nn.Sigmoid, nn.Tanh, Hswish, Hsigmoid]:
 			fn = count_smooth_act
 		elif type(m_) in [nn.LayerNorm, NoNorm]:  
 			fn = count_norm
@@ -160,6 +160,7 @@ def count_activation_size(net, args, input_size=(8, 128), require_backward=True,
 		if (isinstance(m, ResidualBlock) and m.shortcut is not None) or \
 				(isinstance(m, InvertedResidual) and m.use_res_connect) or \
 				type(m) in [BasicBlock, Bottleneck]:
+
 			def new_forward(_module):
 				def lambda_forward(_x):
 					memory_info_dict['residual_size'] = _x.numel() * act_byte

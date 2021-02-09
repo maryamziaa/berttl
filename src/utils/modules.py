@@ -23,6 +23,12 @@ def my_set_layer_from_config(layer_config):
 	else:
 		return set_layer_from_config({'name': layer_name, **layer_config})
 
+class Reshape(nn.Module):
+    def __init__(self, *args):
+        super(Reshape, self).__init__()
+
+    def forward(self, x):
+        return x.permute(0,2,1) #b_size, sentence_length, hidden_size
 
 class LiteResidualModule(MyModule):
 
@@ -32,7 +38,6 @@ class LiteResidualModule(MyModule):
 		super(LiteResidualModule, self).__init__()
 
 		self.main_branch = main_branch
-		pooling = nn.AvgPool1d(downsample_ratio)
 		self.lite_residual_config = {
 			'in_features': in_features,
 			'out_features': out_features,
@@ -46,27 +51,23 @@ class LiteResidualModule(MyModule):
 		}
 
 		kernel_size = 1 if downsample_ratio is None else kernel_size
+		pooling = nn.AvgPool1d(downsample_ratio)
+		reshape_layer = Reshape()
 
 		padding = get_same_padding(kernel_size)
 
-		#pooling = nn.AvgPool1d(downsample_ratio)
 		#num_mid = make_divisible(int(in_features * expand), divisor=MyNetwork.CHANNEL_DIVISIBLE)
-		num_mid = 1024
-		out_features = 1536
-		'''
+		in_features = int(in_features/downsample_ratio)
+		out_features = int(out_features/downsample_ratio)
 
 		self.lite_residual = nn.Sequential(OrderedDict({
-			'conv1': nn.Conv1d(in_features, num_mid, kernel_size= kernel_size, padding= 2, bias=False),
-			'bn1': nn.BatchNorm1d(num_mid),
+			'pooling': pooling,
+			'reshape': reshape_layer,
+			#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= 2, bias=False),
+			'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= padding, bias=False),
 			'act': build_activation(act_func),
-			'conv2': nn.Conv1d(num_mid, out_features, kernel_size= kernel_size, padding= 2, bias=False),
 			'final_bn': nn.BatchNorm1d(out_features),
-		}))
-		'''
-
-		self.lite_residual = nn.Sequential(OrderedDict({
-			'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= 2, bias=False),
-			'final_bn': nn.BatchNorm1d(out_features),
+			
 		}))
 		
 
@@ -76,9 +77,9 @@ class LiteResidualModule(MyModule):
 
 	def forward(self, x):
 		main_x = self.main_branch(x)
-		x_re = torch.reshape(x, (x.shape[0], x.shape[2], x.shape[1])) #b_size, sentence_length, hidden_size
-		lite_residual_x = self.lite_residual(x_re)
+		lite_residual_x = self.lite_residual(x)
 		lite_residual_x= lite_residual_x.permute(0,2,1)
+		
 
 		
 		if self.lite_residual_config['downsample_ratio'] is not None:
@@ -130,14 +131,25 @@ class LiteResidualModule(MyModule):
 				ffn_module=layer_module.ffn
 				linear_1= ffn_module.lin1
 				linear_2= ffn_module.lin2
-				block = linear_1
+				block_1 = linear_1
+				block_2 = linear_2
+				block_downsample_ratio = downsample_ratio
 				if ffn_module.lin1:
-					block_downsample_ratio = downsample_ratio
 					ffn_module.lin1 = LiteResidualModule(
-						block, block.in_features, block.out_features, expand=expand, kernel_size=max_kernel_size,
+						block_1, block_1.in_features, block_1.out_features, expand=expand, kernel_size=max_kernel_size,
 						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
 						upsample_type=upsample_type,
 					)
+				'''	
+				if ffn_module.lin2:
+					ffn_module.lin2 = LiteResidualModule(
+						block_2, block_2.in_features, block_2.out_features, expand=expand, kernel_size=max_kernel_size,
+						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
+						upsample_type=upsample_type,
+					)
+				'''
+
+
 		elif isinstance(net, MobileBertForSequenceClassification):
 			tsf_module = net.mobilebert.transformer.layer
 		else:

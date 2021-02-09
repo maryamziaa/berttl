@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Finetuning the library models for sequence classification on GLUE (Bert, XLM, XLNet, RoBERTa)."""
+""" Finetuning lite-weight models for sequence classification on GLUE (Distilbert and Mobilebert)."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -484,12 +484,13 @@ def main():
             
 
     
-    args.lite_residual_downsample = 4
+    args.lite_residual_downsample = 2
     args.lite_residual_expand = 1
     args.lite_residual_ks = 5
     args.lite_residual_groups = 2
     args.enable_bias_update = True
-    args.enable_bn_update = True
+    args.enable_lite_residual = True
+    args.enable_bn_update = False
 
 
     #LiteResidualModule should be added only to ffn
@@ -497,16 +498,19 @@ def main():
 			model, args.lite_residual_downsample, 'linear', args.lite_residual_expand, args.lite_residual_ks,
             'relu', args.lite_residual_groups,
 		)
-    
 
-    for m in model.modules():
-        if isinstance(m, LiteResidualModule):
-            set_module_grad_status(m.lite_residual, True)
-            if args.enable_bias_update or args.enable_bn_update:
-                m.lite_residual.final_bn.bias.requires_grad = False
 
+    if args.enable_lite_residual:
+        for m in model.modules():
+            if isinstance(m, LiteResidualModule):
+                set_module_grad_status(m.lite_residual, True)
+                if args.enable_bias_update or args.enable_bn_update:
+                    m.lite_residual.final_bn.bias.requires_grad = False
+
+    # weight quantization on frozen parameters
     args.frozen_param_bits=8
-    weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
+    #weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
+
 
 
 
@@ -516,6 +520,9 @@ def main():
     model.to(args.device)
 
     logger.info("Training/evaluation parameters %s", args)
+
+    #print(model)
+    
 
 
 
