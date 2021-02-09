@@ -113,10 +113,16 @@ model = model_class.from_pretrained(args.model_name_or_path,
 # Let's create an instance of a bert model and prepare an input
 # for it:
 #
-
-inputs = {'input_ids':      torch.randint(0, 2843, (1,128)).long(),
+if args.model_type == 'distilbert':
+    inputs = {'input_ids':      torch.randint(0, 2843, (1,128)).long(),
             'attention_mask': torch.randint(0, 2, (1,128)).long(),
             'labels':         torch.randint(0, 1, (1,)).long()}
+else:
+    inputs = {'input_ids':      torch.randint(0, 2843, (1,128)).long(),
+            'attention_mask': torch.randint(0, 2, (1,128)).long(),
+            'token_type_ids': torch.zeros(0, 2843, (1,128)).long(),
+            'labels':         torch.randint(0, 1, (1,)).long()}
+
 
 
 '''  
@@ -141,7 +147,6 @@ inputs['labels'].shape = torch.Size([b_size]
 
 with profiler.profile(record_shapes=True) as prof:
     with profiler.record_function("model_inference"):
-        #model(inputs)
         model(**inputs)
 
 
