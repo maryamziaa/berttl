@@ -496,7 +496,7 @@ def main():
             'param_size': detailed_info['param_size'] / 1e6,
             'act_size': detailed_info['act_size'] / 1e6,
             }
-        with open('%s_net_info.txt'% args.model_type, 'a') as fout:
+        with open('memory_cost_results/%s_net_info.txt'% args.model_type, 'a') as fout:
             fout.write(json.dumps(net_info, indent=4) + '\n')
     #@@@@@@@@@@@@@@@@@@@@@@@@
 

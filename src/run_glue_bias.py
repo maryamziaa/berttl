@@ -471,6 +471,11 @@ def main():
         if all(x in n for x in ['ffn', 'weight']):
             p.requires_grad = False
 
+
+    # weight quantization on frozen parameters
+    args.frozen_param_bits=8
+    weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
+
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
 
@@ -492,7 +497,7 @@ def main():
             'param_size': detailed_info['param_size'] / 1e6,
             'act_size': detailed_info['act_size'] / 1e6,
             }
-        with open('%s_bias_info.txt'% args.model_type, 'a') as fout:
+        with open('memory_cost_results/%s_bias_info.txt'% args.model_type, 'a') as fout:
             fout.write(json.dumps(net_info, indent=4) + '\n')
     #@@@@@@@@@@@@@@@@@@@@@@@@
 
