@@ -25,6 +25,7 @@ import random
 import json
 
 from utils.memory_cost_profiler import *
+from utils.common_utils import weight_quantization
 
 import numpy as np
 import torch
@@ -486,7 +487,7 @@ def main():
 
     # weight quantization on frozen parameters
     args.frozen_param_bits=8
-    weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
+    #weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
@@ -494,6 +495,8 @@ def main():
     model.to(args.device)
 
     logger.info("Training/evaluation parameters %s", args)
+    #print(model)
+    #invalid_call()
 
 
     #@@@@@@@@@@@TinyTL memory cost@@@@@@@@@@@@@

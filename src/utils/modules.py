@@ -122,9 +122,9 @@ class LiteResidualModule(MyModule):
 			# skip if already has lite residual modules
 			return
 		from transformers import DistilBertForSequenceClassification, MobileBertForSequenceClassification
+		from transformers import MobileBertConfig,  MobileBertForSequenceClassification, MobileBertTokenizer
 
-		if isinstance(net, DistilBertForSequenceClassification):
-			
+		if isinstance(net, DistilBertForSequenceClassification):			
 			block_downsample_ratio = downsample_ratio
 			tsf_module = net.distilbert.transformer.layer
 			for i, layer_module in enumerate(tsf_module):
@@ -133,7 +133,6 @@ class LiteResidualModule(MyModule):
 				linear_2= ffn_module.lin2
 				block_1 = linear_1
 				block_2 = linear_2
-				block_downsample_ratio = downsample_ratio
 				if ffn_module.lin1:
 					ffn_module.lin1 = LiteResidualModule(
 						block_1, block_1.in_features, block_1.out_features, expand=expand, kernel_size=max_kernel_size,
@@ -151,7 +150,24 @@ class LiteResidualModule(MyModule):
 
 
 		elif isinstance(net, MobileBertForSequenceClassification):
-			tsf_module = net.mobilebert.transformer.layer
+			tsf_module = net.mobilebert.encoder.layer
+			for i, layer_module in enumerate(tsf_module):
+				ffn_module=layer_module.ffn
+				for ffn_layer_ind in range(0,3):
+					linear_1= ffn_module[ffn_layer_ind].intermediate
+					linear_2= ffn_module[ffn_layer_ind].output
+					block_1 = linear_1
+					block_2 = linear_2
+					block_downsample_ratio = downsample_ratio
+					block_1.in_features = 128
+					block_1.out_features =  512
+					if ffn_module[ffn_layer_ind].intermediate:
+						ffn_module[ffn_layer_ind].intermediate = LiteResidualModule(
+						block_1, block_1.in_features, block_1.out_features, expand=expand, kernel_size=max_kernel_size,
+						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
+						upsample_type=upsample_type,
+					)
+
 		else:
 			raise NotImplementedError
 

@@ -532,6 +532,7 @@ def main():
     logger.info("Training/evaluation parameters %s", args)
 
     #print(model)
+    #invalid_call()
     
 
 
