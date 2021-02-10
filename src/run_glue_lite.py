@@ -506,7 +506,7 @@ def main():
     #LiteResidualModule should be added only to ffn
     LiteResidualModule.insert_lite_residual(
 			model, args.lite_residual_downsample, 'linear', args.lite_residual_expand, args.lite_residual_ks,
-            'relu', args.lite_residual_groups,
+            'gelu', args.lite_residual_groups,
 		)
 
 
