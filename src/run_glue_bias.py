@@ -479,10 +479,23 @@ def main():
 
 
         
-    #update only biases in ffn layers
+    #update only biases except in embedding, attention and classifier layers
+    '''
     for n, p in model.named_parameters():
         if all(x in n for x in ['ffn', 'weight']):
             p.requires_grad = False
+    '''
+    for n, p in model.named_parameters():
+        if all(x in n for x in ['embeddings']):
+            continue
+        if all(x in n for x in ['attention']):
+            continue
+        elif all(x in n for x in ['classifier']):
+            continue
+        else:
+            if all(x in n for x in ['weight']):
+                p.requires_grad = False
+
 
 
     # weight quantization on frozen parameters
@@ -515,6 +528,7 @@ def main():
         with open('memory_cost_results/%s_bias_info.txt'% args.model_type, 'a') as fout:
             fout.write(json.dumps(net_info, indent=4) + '\n')
     #@@@@@@@@@@@@@@@@@@@@@@@@
+    #invalid_call()
 
     # Training
     if args.do_train:
