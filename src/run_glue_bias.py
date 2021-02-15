@@ -480,9 +480,22 @@ def main():
 
         
     #update only biases in ffn layers
+    '''
     for n, p in model.named_parameters():
         if all(x in n for x in ['ffn', 'weight']):
             p.requires_grad = False
+    '''
+    #update only biases except in embedding, attention and classifier layers
+    for n, p in model.named_parameters():
+        if all(x in n for x in ['embeddings']):
+            continue
+        if all(x in n for x in ['attention']):
+            continue
+        elif all(x in n for x in ['classifier']):
+            continue
+        else:
+            if all(x in n for x in ['weight']):
+                p.requires_grad = False
 
 
     # weight quantization on frozen parameters
