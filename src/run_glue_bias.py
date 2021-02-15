@@ -497,7 +497,6 @@ def main():
                 p.requires_grad = False
 
 
-
     # weight quantization on frozen parameters
     args.frozen_param_bits=8
     #weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
