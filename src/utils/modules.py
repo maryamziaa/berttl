@@ -62,23 +62,24 @@ class LiteResidualModule(MyModule):
 
 		self.lite_residual = nn.Sequential(OrderedDict({
 			'pooling': pooling,
-			'reshape': reshape_layer,
+			#'reshape': reshape_layer,
+			'dense': nn.Linear(in_features, out_features, bias=False)
 			#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= 2, bias=False),
-			'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= padding, bias=False),
-			'act': build_activation(act_func),
-			'final_bn': nn.BatchNorm1d(out_features),
+			#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= padding, bias=False),
+			#'act': build_activation(act_func),
+			#'final_bn': nn.BatchNorm1d(out_features),
 			
 		}))
 		
 
 		# initialize
 		init_models(self.lite_residual)
-		self.lite_residual.final_bn.weight.data.zero_()
+		#self.lite_residual.final_bn.weight.data.zero_()
 
 	def forward(self, x):
 		main_x = self.main_branch(x)
 		lite_residual_x = self.lite_residual(x)
-		lite_residual_x= lite_residual_x.permute(0,2,1)
+		#lite_residual_x= lite_residual_x.permute(0,2,1)
 		
 
 		
@@ -139,14 +140,14 @@ class LiteResidualModule(MyModule):
 						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
 						upsample_type=upsample_type,
 					)
-				'''	
+					
 				if ffn_module.lin2:
 					ffn_module.lin2 = LiteResidualModule(
 						block_2, block_2.in_features, block_2.out_features, expand=expand, kernel_size=max_kernel_size,
 						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
 						upsample_type=upsample_type,
 					)
-				'''
+				
 
 
 		elif isinstance(net, MobileBertForSequenceClassification):
@@ -155,18 +156,28 @@ class LiteResidualModule(MyModule):
 				ffn_module=layer_module.ffn
 				for ffn_layer_ind in range(0,3):
 					linear_1= ffn_module[ffn_layer_ind].intermediate
-					linear_2= ffn_module[ffn_layer_ind].output
+					linear_2= ffn_module[ffn_layer_ind].output.dense
 					block_1 = linear_1
 					block_2 = linear_2
 					block_downsample_ratio = downsample_ratio
 					block_1.in_features = 128
 					block_1.out_features =  512
+					block_2.in_features = 512
+					block_2.out_features =  128
 					if ffn_module[ffn_layer_ind].intermediate:
 						ffn_module[ffn_layer_ind].intermediate = LiteResidualModule(
 						block_1, block_1.in_features, block_1.out_features, expand=expand, kernel_size=max_kernel_size,
 						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
 						upsample_type=upsample_type,
 					)
+					
+					if ffn_module[ffn_layer_ind].output:
+						ffn_module[ffn_layer_ind].output.dense = LiteResidualModule(
+						block_2, block_2.in_features, block_2.out_features, expand=expand, kernel_size=max_kernel_size,
+						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
+						upsample_type=upsample_type,
+					)
+					
 
 		else:
 			raise NotImplementedError

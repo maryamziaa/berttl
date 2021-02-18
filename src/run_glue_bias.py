@@ -478,13 +478,18 @@ def main():
                                         cache_dir=args.cache_dir if args.cache_dir else None)
 
 
-        
-    #update only biases in ffn layers
+     
+    #update only biases 
+    for n, p in model.named_parameters():
+        if all(x in n for x in ['weight']):
+            p.requires_grad = False
+
     '''
+    #update only biases in ffn layers
     for n, p in model.named_parameters():
         if all(x in n for x in ['ffn', 'weight']):
             p.requires_grad = False
-    '''
+             
     #update only biases except in embedding, attention and classifier layers
     for n, p in model.named_parameters():
         if all(x in n for x in ['embeddings']):
@@ -496,11 +501,12 @@ def main():
         else:
             if all(x in n for x in ['weight']):
                 p.requires_grad = False
+    '''
 
 
     # weight quantization on frozen parameters
     args.frozen_param_bits=8
-    #weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
+    weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab

@@ -514,8 +514,8 @@ def main():
         for m in model.modules():
             if isinstance(m, LiteResidualModule):
                 set_module_grad_status(m.lite_residual, True)
-                if args.enable_bias_update or args.enable_bn_update:
-                    m.lite_residual.final_bn.bias.requires_grad = False
+                #if args.enable_bias_update or args.enable_bn_update:
+                    #m.lite_residual.final_bn.bias.requires_grad = False
 
     # weight quantization on frozen parameters
     args.frozen_param_bits=8
