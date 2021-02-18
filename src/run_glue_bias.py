@@ -534,6 +534,7 @@ def main():
         with open('memory_cost_results/%s_bias_info.txt'% args.model_type, 'a') as fout:
             fout.write(json.dumps(net_info, indent=4) + '\n')
     #@@@@@@@@@@@@@@@@@@@@@@@@
+    #invalid_call()
 
     # Training
     if args.do_train:
