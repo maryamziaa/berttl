@@ -5,6 +5,7 @@ from collections import OrderedDict
 from ofa.utils.layers import set_layer_from_config, ZeroLayer
 from ofa.utils import MyModule, MyNetwork, MyGlobalAvgPool2d, min_divisible_value, SEModule
 from ofa.utils import get_same_padding, make_divisible, build_activation, init_models
+import sparselinear as sl
 
 __all__ = ['my_set_layer_from_config',
            'LiteResidualModule']
@@ -57,18 +58,23 @@ class LiteResidualModule(MyModule):
 		padding = get_same_padding(kernel_size)
 
 		#num_mid = make_divisible(int(in_features * expand), divisor=MyNetwork.CHANNEL_DIVISIBLE)
-		in_features = int(in_features/downsample_ratio)
-		out_features = int(out_features/downsample_ratio)
+		if downsample_ratio is not None:
+			n_in_features = int(in_features/downsample_ratio)
+			n_out_features = int(out_features/downsample_ratio)
+			#using linears with lower dimensions or convents
+			self.old_lite_residual = nn.Sequential(OrderedDict({
+				'pooling': pooling,
+				#'reshape': reshape_layer,
+				'dense': nn.Linear(n_in_features, n_out_features, bias=False)
+				#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= 2, bias=False),
+				#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= padding, bias=False),
+				#'act': build_activation(act_func),
+				#'final_bn': nn.BatchNorm1d(out_features),
+				}))
 
+		#sparsly-connected linear layers with random masks or dynamic
 		self.lite_residual = nn.Sequential(OrderedDict({
-			'pooling': pooling,
-			#'reshape': reshape_layer,
-			'dense': nn.Linear(in_features, out_features, bias=False)
-			#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= 2, bias=False),
-			#'conv1': nn.Conv1d(in_features, out_features, kernel_size= kernel_size, padding= padding, bias=False),
-			#'act': build_activation(act_func),
-			#'final_bn': nn.BatchNorm1d(out_features),
-			
+			'spars_linear': sl.SparseLinear(in_features, out_features, dynamic=True, bias=False)
 		}))
 		
 

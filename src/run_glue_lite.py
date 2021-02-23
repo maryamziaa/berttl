@@ -494,7 +494,8 @@ def main():
             
 
     
-    args.lite_residual_downsample = 2
+    #args.lite_residual_downsample = 2
+    args.lite_residual_downsample = None
     args.lite_residual_expand = 1
     args.lite_residual_ks = 5
     args.lite_residual_groups = 2
@@ -506,7 +507,7 @@ def main():
     #LiteResidualModule should be added only to ffn
     LiteResidualModule.insert_lite_residual(
 			model, args.lite_residual_downsample, 'linear', args.lite_residual_expand, args.lite_residual_ks,
-            'gelu', args.lite_residual_groups,
+            'relu', args.lite_residual_groups,
 		)
 
 
@@ -519,7 +520,7 @@ def main():
 
     # weight quantization on frozen parameters
     args.frozen_param_bits=8
-    weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
+    #weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
 
 
 
