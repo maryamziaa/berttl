@@ -3,7 +3,8 @@
 How to run the code:
 
 ## Requirements
-pip install transformers==3.2.0
+Python 3.6.3
+pip install -r requirements.txt
 
 ## Download GLUE data
 
