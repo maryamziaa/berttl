@@ -343,7 +343,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     return dataset
 
 
-def main():
+def main(variable_arg):
     parser = argparse.ArgumentParser()
 
     ## Required parameters
@@ -494,8 +494,8 @@ def main():
             
 
     
-    #args.lite_residual_downsample = 2
-    args.lite_residual_downsample = None
+    args.lite_residual_downsample = variable_arg
+    # args.lite_residual_downsample = None
     args.lite_residual_expand = 1
     args.lite_residual_ks = 5
     args.lite_residual_groups = 2
@@ -519,7 +519,7 @@ def main():
                     #m.lite_residual.final_bn.bias.requires_grad = False
 
     # weight quantization on frozen parameters
-    args.frozen_param_bits=8
+    # args.frozen_param_bits=8
     #weight_quantization(model, bits=args.frozen_param_bits, max_iter=20)
 
 
@@ -610,7 +610,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-
+    from time import sleep
+    results = {}
+    for i in range(2, 12):
+        result = main(i)
+        results[i] = result
+        f = open('final_results.out', 'a')
+        f.write(str(results))
+        f.write('\n')
+        f.close()
+    f = open('final_results.out', 'w')
+    f.write(str(results))
+    f.write('\n')
+    f.close()
+    print('final results }{')
+    print(results)
 
 
