@@ -25,5 +25,15 @@ mobilebert_net_info.txt
 
 # data files #
 ######################
-../data/
+data/*
 ../model/.DS_Store
+
+# model #
+model/*
+
+# run data #
+src/runs/*
+src/run.sh
+src/*.out
+
+output_mobilebert
