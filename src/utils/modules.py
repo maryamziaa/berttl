@@ -28,9 +28,8 @@ class LiteResidualModule(MyModule):
 
 	def __init__(self, main_branch, in_channels, out_channels,
 	             expand=1.0, kernel_size=3, act_func='relu', n_groups=2,
-	             downsample_ratio=2, upsample_type='bilinear', stride=1):
+	             downsample_ratio=2, upsample_type='bilinear', stride=1, mid_layer_ratio = 2):
 		super(LiteResidualModule, self).__init__()
-
 		self.main_branch = main_branch
 
 		self.lite_residual_config = {
@@ -54,14 +53,14 @@ class LiteResidualModule(MyModule):
 			pooling = nn.AvgPool1d(downsample_ratio, downsample_ratio, 0)
 		# num_mid = make_divisible(int(in_channels * expand), divisor=MyNetwork.CHANNEL_DIVISIBLE)
 		input_features = in_channels // downsample_ratio
-		num_mid = input_features // 2
+		num_mid = input_features // mid_layer_ratio
 		self.lite_residual = nn.Sequential(OrderedDict({
 			'pooling': pooling,
 			# 'conv1': nn.Conv2d(in_channels, num_mid, kernel_size, stride, padding, groups=n_groups, bias=False),
 			'linear1': nn.Linear(input_features, num_mid, bias=True),
 			# 'bn1': nn.BatchNorm2d(num_mid),
 			# 'act': build_activation(act_func),
-			# 'conv2': nn.Conv2d(num_mid, out_channels, 1, 1, 0, bias=False),
+                        # 'conv2': nn.Conv2d(num_mid, out_channels, 1, 1, 0, bias=False),
 			'linear2': nn.Linear(num_mid, out_channels, bias=True),
 			# 'final_bn': nn.BatchNorm2d(out_channels),
 		}))
@@ -109,7 +108,7 @@ class LiteResidualModule(MyModule):
 
 	@staticmethod
 	def insert_lite_residual(net, downsample_ratio=2, upsample_type='bilinear',
-	                         expand=1.0, max_kernel_size=5, act_func='relu', n_groups=2,
+	                         expand=1.0, max_kernel_size=5, act_func='relu', n_groups=2, mid_layer_ratio = 2
 	                         **kwargs):
 		if LiteResidualModule.has_lite_residual_module(net):
 			# skip if already has lite residual modules
@@ -130,7 +129,7 @@ class LiteResidualModule(MyModule):
 					ffn_module.lin1 = LiteResidualModule(
 						block_1, block_1.in_features, block_1.out_features, expand=expand, kernel_size=max_kernel_size,
 						act_func=act_func, n_groups=n_groups, downsample_ratio=block_downsample_ratio,
-						upsample_type=upsample_type,
+						upsample_type=upsample_type, mid_layer_ratio = mid_layer_ratio
 					)
 					
 				if ffn_module.lin2:

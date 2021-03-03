@@ -494,7 +494,8 @@ def main(variable_arg):
             
 
     
-    args.lite_residual_downsample = variable_arg
+    args.lite_residual_downsample = variable_arg[0]
+    args.lite_residual_mid_layer_ratio = variable_arg[1]
     # args.lite_residual_downsample = None
     args.lite_residual_expand = 1
     args.lite_residual_ks = 5
@@ -507,7 +508,7 @@ def main(variable_arg):
     #LiteResidualModule should be added only to ffn
     LiteResidualModule.insert_lite_residual(
 			model, args.lite_residual_downsample, 'linear', args.lite_residual_expand, args.lite_residual_ks,
-            'relu', args.lite_residual_groups,
+            'relu', args.lite_residual_groups, args.lite_residual_mid_layer_ratio
 		)
 
 
@@ -612,17 +613,13 @@ def main(variable_arg):
 if __name__ == "__main__":
     from time import sleep
     results = {}
-    for i in range(2, 12):
-        result = main(i)
-        results[i] = result
-        f = open('final_results.out', 'a')
-        f.write(str(results))
-        f.write('\n')
-        f.close()
-    f = open('final_results.out', 'w')
-    f.write(str(results))
-    f.write('\n')
-    f.close()
+    for i in [2,3,5,8,9]:
+        for j in range(2, 6):
+            result = main([i,j])
+            results[i] = result
+            f = open('final_results.out', 'a')
+            f.write('downsample ' + str(i) + ':' + result['mcc_'] + '\n')
+            f.close()
     print('final results }{')
     print(results)
 
