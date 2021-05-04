@@ -5,7 +5,7 @@ from ofa.utils import Hswish, Hsigmoid, MyConv2d
 
 from ofa.utils.layers import ResidualBlock
 from torchvision.models.resnet import BasicBlock, Bottleneck
-from torchvision.models.mobilenet import InvertedResidual
+#from torchvision.models.mobilenet import InvertedResidual
 
 from transformers.modeling_mobilebert import *
 
@@ -158,7 +158,7 @@ def count_activation_size(net, args, input_size=(8, 128), require_backward=True,
 			m.forward = new_forward(m)
 
 		if (isinstance(m, ResidualBlock) and m.shortcut is not None) or \
-				(isinstance(m, InvertedResidual) and m.use_res_connect) or \
+				(m.use_res_connect) or \
 				type(m) in [BasicBlock, Bottleneck]:
 
 			def new_forward(_module):
